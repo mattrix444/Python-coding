@@ -16,7 +16,7 @@ def capitals():
   del country_dict[country]
   while len(country_dict) > 0:
     more_times()
-  print("you have exhasuted all the countries, thanks for looking")
+  print("you have exhausted all the countries, thanks for looking")
   quit()
 
 def more_times():
