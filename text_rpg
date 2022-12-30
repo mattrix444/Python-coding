@@ -1,0 +1,512 @@
+import random
+from time import sleep
+from colorama import Fore, Back, Style
+import re
+import sys
+import PySimpleGUI as sg
+
+class Person:
+    def __init__(
+        self, level, health, speed, attack, weapon, max_health=100
+    ):  # initialize base stats of player
+        self.level = level
+        self.health = health
+        self.attack = attack
+        self.speed = speed
+        self.weapon = weapon
+        self.max_health = max_health
+        self.exp = 0
+
+    @property
+    def health(self):
+        return self._health
+
+    @health.setter  # the property decorates with `.setter` now
+    def health(self, new_value):  # name, e.g. "health", is the same
+        if new_value < 0:
+            self._health = 0
+        else:
+            self._health = new_value
+
+
+class Random_enemy(Person):
+    def __init__(self, level, health, speed, attack, type):
+        super().__init__(level, health, speed, attack, weapon=None)
+        self.type = type
+
+
+player_inventory = []
+current_location = ""
+
+
+
+from random import randint
+
+green = Fore.GREEN
+red = Fore.RED
+yellow = Fore.YELLOW
+blue = Fore.BLUE
+reset = Style.RESET_ALL
+
+
+
+
+def generate_weapons():
+    # Generate a random number of weapons
+    num_weapons = randint(10, 20)
+
+    # Create a list of weapon names and materials
+    materials = ['gold', 'silver', 'bronze', 'copper', 'platinum', 'titanium', 'steel', 'iron', 'stone', 'obsidian', 'ruby', 'emerald', 'onyx', 'cobalt', 'brass', 'tin', 'aluminium', 'blue emerald', 'black diamond']
+    weapon_names = ['sword', 'dagger', 'spear', 'axe', 'mace', 'hammer', 'pike', 'katana', 'falchion', 
+                    'scimitar', 'rapier', 'sabre', 'cutlass', 'longsword', 'shortsword', 'broadsword', 
+                    'bastard sword', 'warhammer', 'mace', 'morningstar', 'flail', 'halberd', 'glaive', 
+                    'great sword', 'great axe', 'great mace', 'great hammer', 'great flail', 'great scythe', 
+                    'great club', 'great maul', 'great pick', 'great spade', 'great warhammer', 
+                    'great whip', 'great bow', 'great crossbow', 'great lance', 'great spear', 'great staff']
+    # Create an empty list to store the weapons
+    generated_weapons = []
+    for _ in range(num_weapons):
+        # Create a random weapon
+        weapon_name = weapon_names[randint(0, len(weapon_names) - 1)]
+        weapon_material = materials[randint(0, len(materials) - 1)]
+        generated_weapons.append({
+            "name": f"{weapon_material} {weapon_name}",
+            "dmg": randint(1, 10)
+        })
+    return generated_weapons
+
+weapons = generate_weapons()
+
+    
+        
+
+def equip_item(item_name):
+    # Iterate through the items in the player's inventory
+    for item in player_inventory:
+        # Check if the name of the item is contained in the item_name parameter and if the item is a weapon
+        if item in weapons and item != player.weapon:
+            # Equip the item by setting player.weapon to the item and increasing player.attack by the item's damage value
+            print(f"your damage is {player.attack}")
+            print("equipping item...")
+            sleep(1)
+            player.weapon = item
+            player.attack += item["dmg"]
+            print(f"you equipped the {item['name']}")
+            print(f"your damage is now {player.attack}")
+            return
+        elif item == player.weapon:
+            print("you already have that equipped")
+            return
+    # If the item is not a weapon or is not present in the inventory, print a message indicating that it cannot be equipped
+        else:
+            print(f"You cannot equip the {item_name}")
+
+    
+            
+
+
+
+
+def healing():
+    global player
+    recovered_health = player.health + (player.max_health * 0.25) # 25% of max health
+    player.health += recovered_health
+    print(f"you regained {recovered_health} health")
+    print(f"your health is now {player.health}")
+    return player.health
+
+
+
+def inventory():
+    global player_inventory
+    while True:
+        # Print the items in the player's inventory, along with their indices
+        print("current inventory:")
+        for i, item in enumerate(player_inventory):
+            if item in weapons:
+                print(f"{i+1}. {item['name']} {blue}{item['dmg']}{reset} dmg")
+
+            else:
+                print(f"{i+1}. {item['name']}")
+
+        inventory_options = input(f"what would you like to do? {green}1. use item{reset} {yellow}2 drop item{reset} {blue}3 equip item{reset} {red}4 exit{reset} ")
+        if inventory_options == "1":
+            item_index = int(input("Enter the number for the item you want to use: ")) - 1
+            # Check if the selected index is valid
+            if item_index >= 0 and item_index < len(player_inventory):
+                item_to_use = player_inventory[item_index]
+                player_inventory.remove(item_to_use)
+                print(f"you used {item_to_use['name']}")
+            else:
+                print("Item not found!")
+        elif inventory_options == "2":
+            item_index = int(input("Enter the number for the item you want to drop: ")) - 1
+            # Check if the selected index is valid
+            if item_index >= 0 and item_index < len(player_inventory):
+                item_to_drop = player_inventory[item_index]
+                player_inventory.remove(item_to_drop)
+                print(f"you dropped {item_to_drop['name']}")
+            else:
+                print("Item not found!")
+
+        elif inventory_options == "3":
+            try:
+                item_index = int(input("Enter the number for the item you want to equip: ")) - 1
+                # Check if the selected index is valid
+                if item_index >= 0 and item_index < len(player_inventory):
+                    item_to_equip = player_inventory[item_index]
+                    # Unequip any previously equipped weapon
+                    if "dmg" in player.weapon:
+                        player.attack -= player.weapon["dmg"]
+
+
+                    # Equip the new weapon
+                    equip_item(item_to_equip)
+                    break
+                else:
+                    print("Item not found!")
+
+            except ValueError:
+                print("Invalid input!")
+
+        elif inventory_options == "4":
+            break
+        else:
+            print("invalid option")
+
+
+
+
+def go_back(x):
+    # Define a dictionary that maps the values of x to the corresponding functions
+    locations = {
+        "hallway": hallway,
+        "cave": cave_one,
+        "dark_passage": dark_passage,
+        # Add more locations here as needed
+    }
+
+    # Call the function corresponding to the value of x
+    locations[x]()
+    
+
+
+level_one_items = ["chest key", "moldy bread"]
+kitchen_items = [
+    {"name": "carrot", "healing_value": 10},
+    {"name": "potato", "healing_value": 15},
+    {"name": "moldy parsnip", "healing_value": 5}
+]
+
+
+def get_items(item_list):
+    global player_inventory
+    item = random.choice(item_list)
+    player_inventory.append(item)
+    print(f"you received {item['name']}")
+
+
+
+monster_attack_chance = random.randrange(0, 100)
+
+monster_types = ["Zombie", "Slime", "Rat", "Snake", "Lizard", "Crow", "Spider"]
+
+ESCAPE_CHANCE = random.randrange(0, 100)
+
+
+def escape():
+    return ESCAPE_CHANCE
+
+
+
+def get_hit(attacker, weapon=None):
+    if weapon is not None and weapon in player_inventory:
+        return round(random.randrange(1, attacker.attack) + weapon["dmg"])
+    else:
+        return round(random.randrange(1, attacker.attack))
+
+
+def make_enemy():  # instantiate a random enemy
+    return Random_enemy(
+        1,
+        random.randint(9, 15),
+        random.randint(50, 80),
+        random.randint(8, 11),
+        random.choice(monster_types)
+    )
+
+
+def battle(player, enemy, current_location):
+    # Start the battle
+    while True:
+        # Prompt the player to choose an action
+        action = input(f"What do you want to do? {green}[a]{reset}ttack, {green}[r]{reset}un, or {green}[i]{reset}nventory: ")
+        # Make sure the player enters a valid action
+        while action not in ["a", "r", "i"]:
+            print("Invalid input. Try again.")
+            action = input(f"What do you want to do? {green}[a]{reset}ttack, {green}[r]{reset}un, or {green}[i]{reset}nventory: ")
+        # Carry out the chosen action
+        if action == "a":
+            enemy_hit = get_hit(player, player.weapon)
+            enemy.health -= enemy_hit
+            print(f"You hit the {green}{enemy.type}{reset} for {red}{enemy_hit}{reset} damage!")
+            print(f'{green}{enemy.type}{reset} health is: {green}{enemy.health}{reset}')
+            sleep(1)
+            if enemy.health <= 0:
+                print("You won the battle!")
+
+            # Generate a random number between 0 and 1
+            # If the number is less than 0.7, the player gets a weapon
+                if random.random() < 0.7:
+
+            # Select a random weapon from the list
+                    weapon = random.choice(weapons)
+                    
+                    
+                    print(f"You found a {green}{weapon['name']}{reset}!")
+                    player_inventory.append(weapon)
+
+                    go_back(current_location)
+                    break
+                print("Nothing found!")
+                go_back(current_location)
+                break
+            # The enemy attacks the player
+            player_hit = get_hit(enemy)
+            player.health -= get_hit(enemy)
+            print(f"The {green}{enemy.type}{reset} hit you for {red}{player_hit}{reset} damage!")
+            print(f'your health is: {green}{player.health}{reset}')
+            if player.health <= 0:
+                game_over(enemy.type)
+        elif action == "r":
+            # Try to run away
+            if random.randint(1,100) > 50:
+                print("You successfully ran away!")
+                go_back(current_location)
+            else:
+                print("You failed to run away!")
+
+        elif action == "i":
+            # Show the player's inventory
+            inventory()
+
+
+def rng_battle():  # random battle simulator X
+    if monster_attack_chance > 50:
+        rnd_mob = make_enemy()
+        print(
+            f"you were attacked by a " + green + f"{rnd_mob.type}" + reset + " with " + green + f"{rnd_mob.health}" + reset + " health")
+        battle(player, rnd_mob, current_location)
+
+
+def game_over(
+    *args,
+):  # tells you how you die etc. since args returns tuple had to convert to string, thanks stack overflow :D
+    death = args
+    s = "You died at the hands of a " + re.sub(r",(?=\))", "", str(death))
+    print(s)
+    print(f"\n do you know what IQ is?")
+    sys.exit("game lost")
+
+
+def hallway():
+    global current_location
+    current_location = "hallway"
+    while True:
+        hallput = input(
+            f"you are in a hallway, what will you do?: {green}[d]{reset}escribe, {green}[l]{reset}eft, {green}[f]{reset}orwards or {green}[i]{reset}inventory "
+        )
+        while hallput not in ["f", "l", "d", "i"]:
+            print("ok, you lack brain-cells")
+            hallput = input(
+                f"you are in a hallway, what will you do?: {green}[d]{reset}escribe, {green}[l]{reset}eft, {green}[f]{reset}orwards or {green}[i]{reset}inventory "
+            )
+        if hallput == "d":
+            print("the walls are thickly lined in moss and dirt")
+            sleep(1)
+            print("there are stones and rocks littering the floor nothing interesting")
+            sleep(1)
+            print("old columns are along the walls crumbling and weakened")
+            sleep(1)
+            print("they have symbols on them")
+        elif hallput == "l":
+            rng_battle()
+            dark_passage()
+
+        elif hallput == "f":
+            rng_battle()
+            kitchen()
+
+        elif hallput == "i":
+            inventory()
+
+
+def cave_one():
+    global current_location
+    current_location = "cave"
+    described = False
+    print("\nyou see a chest in the middle of the floor")
+    while True:
+        have_key = False
+        trap_disarmed = False
+        chestput = input(
+            f"\nwhat will you do? {green}[f]{reset}orwards, {green}[o]{reset}pen the chest or {green}[d]{reset}escribe the room: "
+        )
+        while chestput not in ["f", "o", "d", "i"]:
+            print("Sorry you dumb")
+            chestput = input(
+            f"\nwhat will you do? {green}[f]{reset}orwards, {green}[o]{reset}pen the chest or {green}[d]{reset}escribe the room: ")
+
+        if chestput == "f":
+            if monster_attack_chance == 1:
+                rng_battle()
+                hallway()
+            else:
+                hallway()
+
+        elif chestput == "o":
+            if not have_key:
+                print("\nchest is locked")
+
+            else:
+                if not trap_disarmed:
+                    if described == True:
+                        print("you need to disarm the trap")
+                    print(
+                        "you open the chest and it triggers an arrow trap that instantly kills you, oops")
+                    game_over("arrow trap")
+                else:
+                    items = [
+                        "a pair of pants",
+                        "a puchinky chinese takeaway",
+                        "your mums stinking socks",
+                    ]
+                    print(f"you open the chest and receive {random.choice(items)}")
+        elif chestput == "d":
+            if not described:
+                described = True
+                print("\nits pretty dank in here")
+                print(
+                "\nthe chest seems to be emblazoned with some sort of symbol denoting a trap, "
+                "better not open without disarming")
+
+                print("you notice a keyhole on the chest")
+            
+                
+        elif chestput == "i":
+            # Show the player's inventory
+            inventory()
+
+def dark_passage():
+    global current_location
+    current_location = "dark_passage"
+    while True:
+        print("you find yourself in a dark passage with barely any visibility")
+        sleep(1)
+        what = input(f"what whilst thou do?: {green}[d]{reset}escribe {green}[l]{reset}eave, {green}[i]{reset}nventory: ")
+        while what not in ["d", "l", "i"]:
+            print("grasping basic english isn't your strong suit is it?")
+
+        if what == "d": # describe the room
+            print("a cold wind passes you")
+            sleep(1)
+            print("you notice a darkened figure in the far reaches of the corridor")
+            sleep(1)
+            print("it seems to have not noticed you yet")
+        elif what == "l": # leave
+            rng_battle()
+            print("you quickly hurry into the hallway")
+            hallway()
+        elif what == "i": # inventory
+            inventory()
+
+def kitchen():
+    global current_location
+    described = False
+    grabbed = False
+    current_location = "kitchen"
+    # loop until the player leaves and while described remains false
+    while not described:
+        print("you enter what looks like a kitchen")
+        sleep(1)
+        options = input(f"what whilst thou do?: {green}[d]{reset}escribe {green}[l]{reset}eave, {green}[i]{reset}nventory: ")
+        sleep(1)
+        while options not in ["d", "l", "i"]:
+            print("grasping basic english isn't your strong suit is it?")
+        if options == "d":
+            if not described: # describe the room
+                described = True
+                print("there is a large table in the middle of the room")
+                sleep(1)
+                print("around you are many cabinets and shelves")
+                sleep(1)
+                print("there is a large pot on the stove with something bubbling inside")
+                sleep(1)
+                print("there is a door at the back of the room")
+    while True:            
+        options = input(f"what whilst thou do?: {green}[d]{reset}escribe, {green}[g]{reset}rab the item out of the pot on the stove, {green}[i]{reset}nventory,{green}[u]{reset}se the door: ")
+        while options not in ["d", "g", "i", "u"]:
+            print("grasping basic english isn't your strong suit is it?")
+        if options == "d":
+            print("there is a large table in the middle of the room")
+            sleep(1)
+            print("around you are many cabinets and shelves")
+            sleep(1)
+            print("the pot on the stove is bubbling")
+            sleep(1)
+            print("there is a door at the back of the room")
+        elif options == "g" and not grabbed:
+            if grabbed:
+                print("you already have the item")
+                sleep(1)
+            print("you attempt to grab the item out of the pot")
+            sleep(1)
+            print("you burn your hand somewhat but manage to get the item")
+            sleep(1)
+            get_items(kitchen_items)
+            sleep(1)
+            grabbed = True
+
+        elif options == "i":
+            inventory()
+
+        elif options == "u":
+            print("you open the door and find yourself in a short passageway")
+            kitchen_hallway()
+
+
+def kitchen_hallway():
+    global current_location
+    current_location = "kitchen_hallway"
+    while True:
+        print("you find yourself in a hallway with barely any visibility")
+        sleep(1)
+        what = input(f"what whilst thou do?: {green}[d]{reset}escribe {green}[l]{reset}eave, {green}[i]{reset}nventory, {green}[o]{reset}pen the gate: ")
+        while what not in ["d", "l", "i", "o"]:
+            print("grasping basic english isn't your strong suit is it?")
+        if what == "d": # describe the room
+            print("a gate to some sort of dungeon is in front of you")
+            sleep(1)
+            print("the walls are covered in blood")
+            sleep(1)
+            print("you feel a sense of dread")
+        elif what == "l": # leave the room
+            rng_battle()
+            print("you quickly hurry back into the kitchen")
+            kitchen()
+        elif what == "i": # inventory
+            inventory()
+        elif what == "o":
+            print("the gate is locked")
+
+
+
+
+
+if __name__ == "__main__":
+    player_one = input("what is your name?: ")
+    player = Person(1, 100, 20, 12, weapon={})
+    print(f"Hello {green}{player_one}{reset} and welcome to your doom")
+    print("you find yourself alone in an opening to some sort of dwelling\n")
+
+    cave_one()
