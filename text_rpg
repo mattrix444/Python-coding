@@ -24,8 +24,8 @@ class Person:
     def health(self, new_value): # name, e.g. "health", is the same
         if new_value < 0:
             self._health = 0
-        elif new_value > 100:
-            self._health = 100
+        elif new_value > self.max_health:
+            self._health = self.max_health
         else:
             self._health = new_value
 
@@ -51,7 +51,7 @@ class Person:
 
 class Random_enemy(Person):
     def __init__(self, level, health, speed, attack, type):
-        super().__init__(level, health, speed, attack, weapon=None)
+        super().__init__(level, health, speed, attack, weapon=None, max_health=health)
         self.type = type
         self.exp_amount = random.randint(10, 20)
 
@@ -578,7 +578,7 @@ def kitchen_hallway():
 
 if __name__ == "__main__":
     player_one = input("what is your name?: ")
-    player = Person(1, 100, 20, 12, weapon={})
+    player = Person(1, 100, 20, 12, weapon={}, max_health=100)
     print(f"Hello {green}{player_one}{reset} and welcome to your doom")
     sleep(1)
     print("you find yourself alone in an opening to some sort of dwelling\n")
