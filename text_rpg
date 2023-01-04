@@ -1,4 +1,5 @@
 import random
+from random import randint
 from time import sleep
 from colorama import Fore, Back, Style
 import re
@@ -24,8 +25,6 @@ class Person:
     def health(self, new_value): # name, e.g. "health", is the same
         if new_value < 0:
             self._health = 0
-        elif new_value > self.max_health:
-            self._health = self.max_health
         else:
             self._health = new_value
 
@@ -55,30 +54,56 @@ class Random_enemy(Person):
         self.type = type
         self.exp_amount = random.randint(10, 20)
 
-def make_enemy():  # instantiate a random enemy
-    return Random_enemy(
+# Parse the JSON file
+with open('monster_rarities.json', 'r') as f:
+    rarities = json.load(f)
+
+# Create a list of tuples containing the name and weight of each rarity level
+rarities_list = [(r['name'], r['weight']) for r in rarities['rarities']]
+
+def make_enemy():
+    # Use the random.choices() function to choose a rarity level based on its weight
+    rarity = random.choices(rarities_list, weights=[r[1] for r in rarities_list])[0]
+
+    # Choose a random type from the monster_types list
+    type = f"{red}{rarity}{reset} {random.choice(monster_types)}"
+
+    # Get the rarity level values from the rarities list
+    rarity_values = None
+    for r in rarities['rarities']:
+        if r['name'] == rarity:
+            rarity_values = r
+            break
+    
+    if rarity_values is None:
+        # Use default values if the rarity level is not found in the rarities list
+        health_multi = 1
+        attack_multi = 1
+    else:
+        health_multi = rarity_values['health_multi']
+        attack_multi = rarity_values['attack_multi']
+
+    # Generate the enemy with the appropriate multipliers applied
+    enemy = Random_enemy(
         1,
-        random.randint(9, 15),
+        random.randint(20, 40) * health_multi,
         random.randint(50, 80),
-        random.randint(8, 11),
-        random.choice(monster_types)
+        random.randint(8, 11) * attack_multi,
+        type
     )
+    return enemy
+
 
 player_inventory = []
 current_location = ""
 previous_location = ""
 
 
-
-
-from random import randint
-
 green = Fore.GREEN
 red = Fore.RED
 yellow = Fore.YELLOW
 blue = Fore.BLUE
 reset = Style.RESET_ALL
-
 
 
 
@@ -352,10 +377,10 @@ def battle(player, enemy, current_location):
 
 
 def rng_battle():  # random battle simulator X
-    if monster_attack_chance() >= 80:
+    if monster_attack_chance() >= 60:
         rnd_mob = make_enemy()
         print(
-            f"you were attacked by a " + green + f"{rnd_mob.type}" + reset + " with " + green + f"{rnd_mob.health}" + reset + " health")
+            f"you were attacked by an " + green + f"{rnd_mob.type}" + reset + " with " + green + f"{rnd_mob.health}" + reset + " health")
         battle(player, rnd_mob, current_location)
 
 
