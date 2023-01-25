@@ -5,6 +5,7 @@ from colorama import Fore, Back, Style
 import re
 import sys
 import json
+import rich
 
 class Person:
     def __init__(
@@ -49,7 +50,7 @@ class Person:
 
 
 class Random_enemy(Person):
-    def __init__(self, level, health, speed, attack, type):
+    def __init__(self, level, health, speed, attack, type, exp_amount=0):
         super().__init__(level, health, speed, attack, weapon=None, max_health=health)
         self.type = type
         self.exp_amount = random.randint(10, 20)
@@ -64,9 +65,31 @@ rarities_list = [(r['name'], r['weight']) for r in rarities['rarities']]
 def make_enemy():
     # Use the random.choices() function to choose a rarity level based on its weight
     rarity = random.choices(rarities_list, weights=[r[1] for r in rarities_list])[0]
-
+    # create a variable to hold the rarity level name
+    rarity_name = rarity[0]
+    if rarity_name == 'Common':
+        rarity_name = f"{white}{rarity_name}{reset}"
+    elif rarity_name == 'Uncommon':
+        rarity_name = f"{green}{rarity_name}{reset}"
+    elif rarity_name == 'Rare':
+        rarity_name = f"{blue}{rarity_name}{reset}"
+    elif rarity_name == 'Epic':
+        rarity_name = f"{magenta}{rarity_name}{reset}"
+    elif rarity_name =='Legendary':
+        rarity_name = f"{cyan}{rarity_name}{reset}"
+    elif rarity_name == 'Mythical':
+        rarity_name = f"{yellow}{rarity_name}{reset}"
+    elif rarity_name == 'Divine':
+        rarity_name = f"{bright}{white}{rarity_name}{reset}"
+    elif rarity_name == 'Godly':
+        rarity_name = f"{bright}{blue}{rarity_name}{reset}"
+    else:
+        rarity_name = rarity_name
+        
+    
+    
     # Choose a random type from the monster_types list
-    type = f"{red}{rarity}{reset} {random.choice(monster_types)}"
+    type = f"{red}{rarity_name}{reset} {random.choice(monster_types)}"
 
     # Get the rarity level values from the rarities list
     rarity_values = None
@@ -79,9 +102,11 @@ def make_enemy():
         # Use default values if the rarity level is not found in the rarities list
         health_multi = 1
         attack_multi = 1
+        exp_multi = 1
     else:
         health_multi = rarity_values['health_multi']
         attack_multi = rarity_values['attack_multi']
+        exp_multi = rarity_values['exp_multi']
 
     # Generate the enemy with the appropriate multipliers applied
     enemy = Random_enemy(
@@ -89,7 +114,8 @@ def make_enemy():
         random.randint(20, 40) * health_multi,
         random.randint(50, 80),
         random.randint(8, 11) * attack_multi,
-        type
+        type,
+        exp_amount=random.randint(10, 20) * exp_multi
     )
     return enemy
 
@@ -103,7 +129,12 @@ green = Fore.GREEN
 red = Fore.RED
 yellow = Fore.YELLOW
 blue = Fore.BLUE
+magenta = Fore.MAGENTA
+cyan = Fore.CYAN
+white = Fore.WHITE
+black = Fore.BLACK
 reset = Style.RESET_ALL
+bright = Style.BRIGHT
 
 
 
@@ -121,13 +152,34 @@ def generate_weapons():
                     'great whip', 'great bow', 'great crossbow', 'great lance', 'great spear', 'great staff']
     # Create an empty list to store the weapons
     generated_weapons = []
+    rarity_weight = {"common": 100, "uncommon": 30, "rare": 10, "epic": 7, "legendary": 4, "mythical": 3, "divine": 2, "godly": 1}
+    rarity_list = [rarity for rarity, weight in rarity_weight.items() for _ in range(weight)]
     for _ in range(num_weapons):
         # Create a random weapon
         weapon_name = weapon_names[randint(0, len(weapon_names) - 1)]
         weapon_material = materials[randint(0, len(materials) - 1)]
+        weapon_rarity = random.choice(rarity_list)
+        if weapon_rarity == 'common':
+            weapon_dmg = randint(1,5)
+        elif weapon_rarity == 'uncommon':
+            weapon_dmg = randint(3,8)
+        elif weapon_rarity == 'rare':
+            weapon_dmg = randint(5,10)
+        elif weapon_rarity == 'epic':
+            weapon_dmg = randint(7,12)
+        elif weapon_rarity == 'legendary':
+            weapon_dmg = randint(9,15)
+        elif weapon_rarity =='mythical':
+            weapon_dmg = randint(10,15)
+        elif weapon_rarity == 'divine':
+            weapon_dmg = randint(15,20)
+        elif weapon_rarity == 'godly':
+            weapon_dmg = randint(20,30)
+        
         generated_weapons.append({
-            "name": f"{weapon_material} {weapon_name}",
-            "dmg": randint(1, 10)
+            "name": f"{weapon_material.capitalize()} {weapon_name.capitalize()}",
+            "rarity": weapon_rarity,
+            "dmg": weapon_dmg
         })
     return generated_weapons
 
@@ -149,6 +201,9 @@ def equip_item(item_name):
             player.attack += item["dmg"]
             print(f"you equipped the {item['name']}")
             print(f"your damage is now {player.attack}")
+            with open("player_progress.json", "r") as f:
+                data = json.load(f)
+                data['current_weapon'] = player.weapon
             return
         elif item == player.weapon:
             print("you already have that equipped")
@@ -232,7 +287,7 @@ def inventory():
                 # Check if the selected index is valid
                 if item_index >= 0 and item_index < len(player_inventory):
                     item_to_equip = player_inventory[item_index]
-                    # Unequip any previously equipped weapon
+                    # Un-equip any previously equipped weapon
                     if "dmg" in player.weapon:
                         player.attack -= player.weapon["dmg"]
 
@@ -260,11 +315,13 @@ def go_back(x):
         "hallway": hallway,
         "cave": cave_one,
         "dark_passage": dark_passage,
-        "kitchen": kitchen,
+        "kitchen": enter_kitchen,
         "kitchen hallway": kitchen_hallway,
+        "dungeon": dungeon,
         # Add more locations here as needed
     }
-
+    if x not in locations:
+        return
     # Call the function corresponding to the value of x
     locations[x]()
     
@@ -313,10 +370,7 @@ def get_hit(attacker, weapon=None):
         return round(random.randrange(1, attacker.attack) + weapon["dmg"])
     else:
         return round(random.randrange(1, attacker.attack))
-
-
-
-
+    
 
 def battle(player, enemy, current_location):
     # Start the battle
@@ -391,7 +445,7 @@ def game_over(
     s = "You died at the hands of a " + re.sub(r",(?=\))", "", str(death))
     print(s)
     print(f"\n do you know what IQ is?")
-    sys.exit("game lost")
+    sys.exit("You were too weak adventurer, try again next time!")
 
 
 def hallway():
@@ -420,20 +474,36 @@ def hallway():
 
         elif hallput == "f":
             rng_battle()
-            kitchen()
+            print("you leave the hallway and enter a kitchen")
+            enter_kitchen()
 
         elif hallput == "i":
             inventory()
 
+def enter_cave(): # TODO sort out the json file and make it so that the player can save their progress
+    with open("player_progression.json", "r") as f:
+        progress = json.load(f)
+        trap_disarmed = False
+        have_key = False
+        described = False  
+        if trap_disarmed == True:
+            trap_disarmed = True
+        if have_key == True:
+            have_key = True
+        if described == True:
+            described = True
+        cave_one(trap_disarmed, have_key, described)
+    
+            
+    
 
-def cave_one():
+
+def cave_one(trap_disarmed=False, have_key=False, described=False):
     global current_location
     current_location = "cave"
     described = False
     print("\nyou see a chest in the middle of the floor")
     while True:
-        have_key = False
-        trap_disarmed = False
         chestput = input(
             f"\nwhat will you do? {green}[f]{reset}orwards, {green}[o]{reset}pen the chest, {green}[d]{reset}escribe the room, {green}[i]{reset}nventory: "
         )
@@ -446,24 +516,11 @@ def cave_one():
             rng_battle()
             hallway()
 
-        elif chestput == "o":
-            if not have_key:
+        elif chestput == "o" and have_key == True: 
                 print("\nchest is locked")
 
-            else:
-                if not trap_disarmed:
-                    if described == True:
-                        print("you need to disarm the trap")
-                    print(
-                        "you open the chest and it triggers an arrow trap that instantly kills you, oops")
-                    game_over("arrow trap")
-                else:
-                    items = [
-                        "a pair of pants",
-                        "a puchinky chinese takeaway",
-                        "your mums stinking socks",
-                    ]
-                    print(f"you open the chest and receive {random.choice(items)}")
+
+            
         elif chestput == "d":
             if not described:
                 described = True
@@ -472,7 +529,9 @@ def cave_one():
                 "\nthe chest seems to be emblazoned with some sort of symbol denoting a trap, "
                 "better not open without disarming")
 
-                print("you notice a keyhole on the chest")
+                print("you notice a keyhole on the chest") 
+                with open("grabbed.txt", "w") as f: # write to file
+                    f.write(str(described))
             
                 
         elif chestput == "i":
@@ -502,10 +561,29 @@ def dark_passage():
         elif what == "i": # inventory
             inventory()
 
-def kitchen():
+
+def enter_room(room): # TODO finish this
+    if room == "kitchen":
+        enter_kitchen()
+    elif room == "cave":
+        enter_cave()
+    elif room == "dark_passage":
+        dark_passage()
+    elif room == "hallway":
+        hallway()
+
+def enter_kitchen():
+    with open("grabbed.txt", "r") as f:
+        grabbed = f.read()
+    if grabbed == "True":
+        grabbed = True
+    else:
+        grabbed = False
+    kitchen(grabbed)
+
+def kitchen(grabbed):
     global current_location
     described = False
-    grabbed = False
     current_location = "kitchen"
     # loop until the player leaves and while described remains false
     while not described:
@@ -515,6 +593,7 @@ def kitchen():
         sleep(1)
         while options not in ["d", "l", "i"]:
             print("grasping basic english isn't your strong suit is it?")
+            options = input(f"what whilst thou do?: {green}[d]{reset}escribe {green}[l]{reset}eave, {green}[i]{reset}nventory: ")
         if options == "d":
             if not described: # describe the room
                 described = True
@@ -535,7 +614,8 @@ def kitchen():
     while True:            
         options = input(f"what whilst thou do?: {green}[d]{reset}escribe, {green}[g]{reset}rab the item out of the pot on the stove, {green}[i]{reset}nventory,{green}[u]{reset}se the door: ")
         while options not in ["d", "g", "i", "u"]:
-            print("grasping basic english isn't your strong suit is it?")
+            print("Cannot comprehend what you are saying")
+            options = input(f"what whilst thou do?: {green}[d]{reset}escribe, {green}[g]{reset}rab the item out of the pot on the stove, {green}[i]{reset}nventory,{green}[u]{reset}se the door: ")
         if options == "d":
             print("there is a large table in the middle of the room")
             sleep(1)
@@ -545,14 +625,9 @@ def kitchen():
             sleep(1)
             print("there is a door at the back of the room")
         elif options == "g" and not grabbed:
-            if grabbed:
-                print("you already have the item but you put your hand into the pot again")
-                sleep(1)
-                print("there is nothing left and you burn your hand again")
-                sleep(1)
-                player.health -= 5
-                print(f"you have {red}{player.health}{reset} health left")
-                sleep(1)
+            grabbed = True
+            with open("grabbed.txt", "w") as f:
+                f.write(str(grabbed))
             print("you attempt to grab the item out of the pot")
             sleep(1)
             print("you burn your hand somewhat but manage to get the item")
@@ -563,7 +638,10 @@ def kitchen():
             sleep(1)
             get_items(kitchen_items)
             sleep(1)
-            grabbed = True
+        elif options == "g" and grabbed:
+            print("you have already grabbed the item")
+
+
 
         elif options == "i":
             inventory()
@@ -581,7 +659,7 @@ def kitchen_hallway():
         sleep(1)
         what = input(f"what whilst thou do?: {green}[d]{reset}escribe {green}[l]{reset}eave, {green}[i]{reset}nventory, {green}[o]{reset}pen the gate: ")
         while what not in ["d", "l", "i", "o"]:
-            print("grasping basic english isn't your strong suit is it?")
+            print("cannot understand what you are saying")
         if what == "d": # describe the room
             print("a gate to some sort of dungeon is in front of you")
             sleep(1)
@@ -591,12 +669,37 @@ def kitchen_hallway():
         elif what == "l": # leave the room
             rng_battle()
             print("you quickly hurry back into the kitchen")
-            kitchen()
+            enter_kitchen()
         elif what == "i": # inventory
             inventory()
         elif what == "o":
             print("the gate is locked")
 
+def dungeon():
+    global current_location
+    current_location = "dungeon"
+    while True:
+        print("you enter the dungeon")
+        sleep(1)
+        what = input(f"what whilst thou do?: {green}[d]{reset}escribe {green}[l]{reset}eave, {green}[i]{reset}nventory: ")
+        while what not in ["d", "l", "i"]:
+            print("cannot understand what you are saying")
+            what = input(f"what whilst thou do?: {green}[d]{reset}escribe {green}[l]{reset}eave, {green}[i]{reset}nventory: ")
+            sleep(1)
+        if what == "d": # describe the room
+            print("the floor is covered in blood and you can see what looks like a half eaten corpse!")
+            sleep(1)
+            print("all of a sudden what seemed like a nice dungeon turns into a nightmare")
+            sleep(1)
+            print("there are symbols on the floor that you don't understand")
+        elif what == "l": # leave the room
+            rng_battle()
+            print("you quickly hurry back into the kitchen hallway")
+            enter_room(kitchen_hallway)
+        elif what == "i": # inventory
+            inventory()
+        else:
+            print("cannot understand what you are saying")
 
 
 
@@ -607,5 +710,5 @@ if __name__ == "__main__":
     print(f"Hello {green}{player_one}{reset} and welcome to your doom")
     sleep(1)
     print("you find yourself alone in an opening to some sort of dwelling\n")
-
     cave_one()
+
