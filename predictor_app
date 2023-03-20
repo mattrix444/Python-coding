@@ -1,0 +1,25 @@
+import random
+from time import sleep
+from colorama import Fore, Style, init
+
+# Initialize colorama with auto-reset
+
+init(autoreset=True)  
+red = Fore.RED
+green = Fore.GREEN
+
+def predict():
+    total_iterations = random.randint(1, 44)
+    for i in range(1, total_iterations + 1):
+        result = random.choice(["Yes", "No", "Maybe", "Not the right time to ask", "100% yes", "Definitely not!", "Resounding yes", "Totally impossible"])
+        if i == total_iterations:
+            print(f"The universe says: {green}{result}")
+        else:
+            print(red + "thinking...")
+        sleep(random.randint(0, 1))
+
+# Get user input for a yes or no question
+question = input("Please ask a question: ")
+
+# Call the predict function
+predict()
