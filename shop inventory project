@@ -1,0 +1,89 @@
+class Inventory:
+    def __init__(self, max_inventory_capacity):
+        self.max_inventory_capacity = max_inventory_capacity
+        self.items = {}
+        self.item_count = 0
+        self.sales = []
+
+    def add_item(self, name, price, quantity):
+        if name in self.items:
+            return False
+        if self.item_count + quantity > self.max_inventory_capacity:
+            return False
+        self.items[name] = {"name": name, "price": price, "quantity": quantity}
+        self.item_count += quantity
+        return True
+
+    def delete_item(self, name):
+        if name not in self.items:
+            return False
+
+        self.item_count -= self.items[name]["quantity"]
+        del self.items[name]
+        return True
+
+    def get_items_in_price_range(self, min_price, max_price):
+        result = []
+        for item in self.items:
+            if (self.items[item]["price"] >= min_price and self.items[item]["price"] <= max_price):
+                result.append(item)
+        return result
+
+    def get_most_stocked_item(self):
+        most_stocked_item = None
+        most_stocked_quantity = 0
+        for item in self.items:
+            if self.items[item]["quantity"] > most_stocked_quantity:
+                most_stocked_item = item
+                most_stocked_quantity = self.items[item]["quantity"]
+        return most_stocked_item
+    
+    def get_profit(self):
+        profit = 0
+        for item in self.items:
+            profit += self.items[item]["price"] * self.items[item]["quantity"]
+        return f"Current inventory value is £{profit:,.2f}"
+        
+    def print_inventory(self):
+        print("Current Inventory:")
+        print("------------------")
+        print("{:<40} {:<10} {:<10} {:<10}".format("Name", "Price", "Quantity", "Total Value"))
+        for item in self.items.values():
+            name = item["name"]
+            price = item["price"]
+            quantity = item["quantity"]
+            total_value = price * quantity
+            print("{:<40} {:<10} {:<10} {:<10}".format(name, price, quantity, total_value))
+            
+    def sell_item(self, name, quantity):
+        if name not in self.items:
+            return False
+
+        if self.items[name]["quantity"] < quantity:
+            return False
+
+        self.items[name]["quantity"] -= quantity
+        self.item_count -= quantity
+        sale = {"name": name, "quantity": quantity}
+        self.sales.append(sale)
+        return True
+
+    def print_sales(self):
+        print("Sales History:")
+        print("--------------")
+        print("{:<40} {:<10}".format("Name", "Quantity"))
+        for sale in self.sales:
+            name = sale["name"]
+            quantity = sale["quantity"]
+            print("{:<40} {:<10}".format(name, quantity))
+        
+store_one = Inventory(25000)
+store_one.add_item("Rare TY beanies", 500, 10)
+store_one.add_item("Common small TY beanies", 5, 1400)
+store_one.add_item("Keyring TY beanies", 2, 1000)
+store_one.add_item("Vintage Discontinued TY beanies", 50, 1000)
+store_one.print_sales()
+store_one.print_inventory()
+store_one.sell_item("Rare TY beanies", 2)
+print(store_one.get_profit())
+store_one.print_inventory()
