@@ -1,37 +1,41 @@
+def more_times(country_dict):
+    need_more = input("Would you like to know another capital? (yes/no): ")
+
+    while need_more.lower() not in ("yes", "no"):
+        print('\nSorry please input a valid answer ("yes" or "no")\n')
+        need_more = input("\nWould you like to know another capital? (yes/no): ")
+        
+    if "no" in need_more:
+        print("Ok thank you, see you next time")
+        quit()
+        
+    elif "yes" in need_more:
+        if len(country_dict) == 0:
+            print("Sorry you have exhausted the list, thanks for looking")
+            quit()
+        
+    capitals(country_dict)
+
+def capitals(country_dict):
+    print(list(country_dict.keys()))
+    country = input("\nWhich country's capital do you want to know?: ")
+
+    while not country in country_dict.keys():
+        print("\nSorry this does not exist\n")
+        country = input("Which country's capital do you want to know?: ")
+
+    print(f"\nThe capital of {country} is {country_dict[country]}\n")
+    del country_dict[country]
+
+    while len(country_dict) > 0:
+        more_times(country_dict)
+
+    print("You have exhausted all the countries, thanks for looking")
+    quit()
+
 country_dict = {"England": "London",
              "Scotland": "Edinburgh",
              "Wales": "Cardiff",
              "Ireland": "Dublin"}
 
-def capitals():
-  print(list(country_dict.keys()))
-  
-  country = input("\nWhich country's capital do you want to know?: ")
-  
-  while not country in country_dict.keys():
-    print("\nSorry this does not exist\n")
-    country = input("Which country's capital do you want to know?: ")
-
-  print(f"\n The capital of {country} is {country_dict[country]}\n")
-  del country_dict[country]
-  while len(country_dict) > 0:
-    more_times()
-  print("you have exhausted all the countries, thanks for looking")
-  quit()
-
-def more_times():
-    need_more = input("Would you like to know another capital? (yes/no): ")
-
-    while need_more.lower() not in ("yes", "no"):
-      print('\nSorry please input a valid answer ("yes" or "no")\n')
-      need_more = input("\nWould you like to know another capital? (yes/no): ")
-    if "no" in need_more:
-      print("Ok thank you, see you next time")
-      quit()
-    elif "yes" in need_more:
-      if len(country_dict) == 0:
-        print("Sorry you have exhausted the list, thanks for looking")
-        quit()
-    capitals()
-
-capitals()
+capitals(country_dict)
