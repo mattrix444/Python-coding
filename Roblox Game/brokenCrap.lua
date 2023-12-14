@@ -111,7 +111,7 @@ local function updateNameplate(nameplateData, npcInfo, rarity, selectedAffixes, 
 	end
 end
 
-local function createNpc(spawnLocation, npcInfo, rarity, zoneBaseHealth, selectedAffixes, selectedSuffixes, zoneName)
+local function createNpc(spawnLocation, npcInfo, rarity, zoneBaseHealth)
 		
 	-- Apply rarity bonuses
 	local rarityBonus = rarity.bonus
@@ -232,35 +232,22 @@ local function createNpc(spawnLocation, npcInfo, rarity, zoneBaseHealth, selecte
 
 	npc.Parent = game.Workspace
 	
-	local function respawnNpc(spawnLocation, zoneName, zoneBaseHealth)
-		local areaData = NpcData[zoneName]
-
-		if not areaData or not areaData.npcs then
-			print("Error: Invalid areaData or areaData.npcs is nil for zone:", zoneName)
-			return
-		end
-
-		local npcInfo = areaData.npcs[math.random(#areaData.npcs)]
-		local rarity = selectRarity()
-		local selectedAffixes = selectAffixesForNpc()
-		local selectedSuffixes = selectSuffixesForNpc()
-
-		createNpc(spawnLocation, npcInfo, rarity, zoneBaseHealth, selectedAffixes, selectedSuffixes, zoneName)
-	end
-
-
-	
 	-- Setup Humanoid Died event for respawning the NPC
 	local humanoid = npc:FindFirstChildOfClass("Humanoid")
 	if humanoid then
 		humanoid.Died:Connect(function()
-			wait(5)  -- Wait before respawning
-			respawnNpc(spawnLocation, zoneName, zoneBaseHealth)  -- Pass the zone name
+			wait(5)  -- Wait for a set amount of time before respawning, adjust as needed
+			respawnNpc(spawnLocation, npcInfo, zoneBaseHealth)  -- Call respawn function
 		end)
 	end
 end
 
-
+local function respawnNpc(spawnLocation, npcInfo, zoneBaseHealth)
+	local rarity = selectRarity()  -- Re-select rarity for respawned NPC
+    local selectedAffixes = selectAffixesForNpc()
+    local selectedSuffixes = selectSuffixesForNpc()
+	createNpc(spawnLocation, npcInfo, rarity, zoneBaseHealth)
+end
 
 
 local function spawnNpcsInArea(zoneFolder, areaData)
@@ -275,13 +262,11 @@ local function spawnNpcsInArea(zoneFolder, areaData)
 	print("Zone Name:", zoneFolder.Name)
 	print("NPC Base Health for zone:", areaData.npcBaseHealth)
 
-	print("Spawning NPCs in zone:", zoneFolder.Name)  -- Make sure this prints correctly
 	for i = 1, areaData.maxNpcs do
 		local npcInfo = areaData.npcs[math.random(#areaData.npcs)]
 		local rarity = selectRarity()
-		local selectedAffixes = selectAffixesForNpc()
-		local selectedSuffixes = selectSuffixesForNpc()
-		createNpc(spawnLocation, npcInfo, rarity, areaData.npcBaseHealth, selectedAffixes, selectedSuffixes, zoneFolder.Name)
+		print(rarity.name, npcInfo.name)
+		createNpc(spawnLocation, npcInfo, rarity, areaData.npcBaseHealth)
 
 		local randomWaitTime = math.random(1, 3)
 		wait(randomWaitTime)
