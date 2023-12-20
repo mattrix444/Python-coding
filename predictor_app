@@ -4,19 +4,40 @@ from colorama import Fore, Style, init
 
 # Initialize colorama with auto-reset
 
-init(autoreset=True)  
+init(autoreset=True)
 red = Fore.RED
 green = Fore.GREEN
+
 
 def predict():
     total_iterations = random.randint(1, 44)
     for i in range(1, total_iterations + 1):
-        result = random.choice(["Yes", "No", "Maybe", "Not the right time to ask", "100% yes", "Definitely not!", "Resounding yes", "Totally impossible"])
+        result = random.choice(
+            [
+                "Yes",
+                "No",
+                "Maybe",
+                "Not the right time to ask",
+                "100% yes",
+                "Definitely not!",
+                "Resounding yes",
+                "Totally impossible",
+            ]
+        )
         if i == total_iterations:
             print(f"The universe says: {green}{result}")
         else:
             print(red + "thinking...")
         sleep(random.randint(0, 1))
+
+    # Ask the user if they want to ask another question
+    ask_again = input("Would you like to ask another question? (y/n): ")
+    if ask_again == "y":
+        predict()
+    else:
+        print("Thank you for playing!")
+        exit()
+
 
 # Get user input for a yes or no question
 question = input("Please ask a question: ")

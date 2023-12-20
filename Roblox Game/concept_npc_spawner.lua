@@ -111,7 +111,7 @@ local function updateNameplate(nameplateData, npcInfo, rarity, selectedAffixes, 
 	end
 end
 
-local function createNpc(spawnLocation, npcInfo, rarity, zoneBaseHealth, selectedAffixes, selectedSuffixes, zoneName)
+local function createNpc(spawnLocation, npcInfo, rarity, zoneBaseHealth, selectedAffixes, selectedSuffixes, zoneName) 
 		
 	-- Apply rarity bonuses
 	local rarityBonus = rarity.bonus
@@ -131,7 +131,7 @@ local function createNpc(spawnLocation, npcInfo, rarity, zoneBaseHealth, selecte
 			if type(suffixData.extraHealth) == "number" then
 				finalHealth = finalHealth * suffixData.extraHealth
 			else
-				print("Warning: extraHealth for suffix", suffix, "is not a number")
+				print("Warning: extraHealth for suffix", suffix, "is not a number") -- print a warning if the extraHealth is not a number
 			end
 		end
 	end
@@ -254,7 +254,7 @@ local function createNpc(spawnLocation, npcInfo, rarity, zoneBaseHealth, selecte
 	local humanoid = npc:FindFirstChildOfClass("Humanoid")
 	if humanoid then
 		humanoid.Died:Connect(function()
-			wait(5)  -- Wait before respawning
+			wait(5)  -- Wait before respawning to save server load
 			respawnNpc(spawnLocation, zoneName, zoneBaseHealth)  -- Pass the zone name
 		end)
 	end
@@ -273,9 +273,9 @@ local function spawnNpcsInArea(zoneFolder, areaData)
 	end
 	
 	print("Zone Name:", zoneFolder.Name)
-	print("NPC Base Health for zone:", areaData.npcBaseHealth)
+	print("NPC Base Health for zone:", areaData.npcBaseHealth) -- Print base health before adjustments
 
-	print("Spawning NPCs in zone:", zoneFolder.Name)  -- Make sure this prints correctly
+	print("Spawning NPCs in zone:", zoneFolder.Name)  -- Print the zone name
 	for i = 1, areaData.maxNpcs do
 		local npcInfo = areaData.npcs[math.random(#areaData.npcs)]
 		local rarity = selectRarity()
@@ -303,6 +303,7 @@ local function spawnNpcs()
 			print("Error: No data found for area: " .. zoneFolder.Name)
 		else
 			coroutine.wrap(spawnNpcsInArea)(zoneFolder, areaData)
+
 		end
 	end
 end
